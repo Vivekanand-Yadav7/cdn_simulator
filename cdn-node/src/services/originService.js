@@ -44,32 +44,8 @@ function fetchFromOriginHttp(filename) {
     });
 }
 
-function postToOrigin(filename, content) {
-    return new Promise((resolve, reject) => {
-        const req = http.request({
-            hostname: 'localhost',
-            port: 3001,
-            path: `/api/file/${filename.replace('.txt', '')}`,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain',
-                'Content-Length': Buffer.byteLength(content)
-            }
-        }, res => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-                resolve();
-            } else {
-                reject(new Error(`Origin responded with status ${res.statusCode}`));
-            }
-        });
-        req.on('error', reject);
-        req.write(content);
-        req.end();
-    });
-}
 
 module.exports = {
     fetchFromOrigin,
-    fetchFromOriginHttp,
-    postToOrigin
+    fetchFromOriginHttp
 };

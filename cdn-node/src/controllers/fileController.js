@@ -1,19 +1,6 @@
 const cacheService = require('../services/cacheService');
 const originService = require('../services/originService');
 
-exports.postFile = async (req, res) => {
-    try {
-        const { name } = req.params;
-        const filename = `${name}.txt`;
-        const content = req.body;
-        
-        await originService.postToOrigin(filename, content);
-        res.status(200).send("File posted to origin successfully.");
-    } catch (error) {
-        res.status(500).send("Error posting file: " + error.message);
-    }
-};
-
 exports.getFile = async (req, res) => {
     try {
         const { name } = req.params;
