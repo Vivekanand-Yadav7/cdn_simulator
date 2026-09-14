@@ -1,41 +1,39 @@
-const fs = require("fs").promises;
-const path = require("path");
-
-const CACHE_DIR = path.resolve(__dirname, "../../cache");
+const { redis, CACHE_TTL_SECONDS } = require('../redis');
 
 /**
- * Retrieves cached content if available.
- * @param {string} filename - The name of the file to check.
- * @returns {Promise<string|null>} Cached content or null if not found.
+ * Retrieves cached content from Redis.
+ * @param {string} filename - The cache key.
+ * @returns {Promise<string|null>} Cached content or null if not found / expired.
  */
 async function getCachedContent(filename) {
-    const filePath = path.join(CACHE_DIR, filename);
-
-    try {
-        const data = await fs.readFile(filePath, "utf-8");
-        return data;
-    } catch (error) {
-        if (error.code === "ENOENT") {
-            return null;
-        }
-        throw error;
-    }
+    const data = await redis.get(filename);
+    return data ?? null;
 }
 
 /**
- * Writes content to the local cache directory.
- * @param {string} filename - The name of the file to store.
- * @param {string} content - The file data to cache.
+ * Stores content in Redis with a TTL.
+ * @param {string} filename - The cache key.
+ * @param {string} content - The content to cache.
  * @returns {Promise<void>}
  */
 async function setCachedContent(filename, content) {
-    await fs.mkdir(CACHE_DIR, { recursive: true });
-    const filePath = path.join(CACHE_DIR, filename);
-    await fs.writeFile(filePath, content, "utf-8");
-    console.log(`Stored in cache: ${filename}`);
+    await redis.set(filename, content, { ex: CACHE_TTL_SECONDS });
+    console.log(`Stored in Redis cache: ${filename} (TTL: ${CACHE_TTL_SECONDS}s)`);
+}
+
+/**
+ * Deletes a cached entry from Redis.
+ * @param {string} filename - The cache key to invalidate.
+ * @returns {Promise<void>}
+ */
+async function invalidateCache(filename) {
+    await redis.del(filename);
+    console.log(`Invalidated Redis cache: ${filename}`);
 }
 
 module.exports = {
     getCachedContent,
     setCachedContent,
+    invalidateCache,
 };
+
