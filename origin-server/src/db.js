@@ -40,7 +40,7 @@ function nodeFetch(url, options = {}) {
 const sql = neon(process.env.DATABASE_URL, { fetchFunction: nodeFetch });
 
 /**
- * Initializes the database by creating the `files` table if it doesn't exist.
+ * Initializes the database by creating the `files` and `users` tables if they don't exist.
  */
 async function initDb() {
     await sql`
@@ -51,7 +51,16 @@ async function initDb() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `;
-    console.log('PostgreSQL (Neon) connected & table ready.');
+
+    await sql`
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    console.log('PostgreSQL (Neon) connected & tables ready.');
 }
 
 module.exports = { sql, initDb };
