@@ -1,22 +1,30 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { sql } = require('../db');
 
-const CONTENT_DIR = path.join(__dirname, '../../content');
-
+/**
+ * Saves (or replaces) a file's content in PostgreSQL.
+ * @param {string} filename
+ * @param {string} content
+ */
 exports.saveFile = async (filename, content) => {
-    await fs.mkdir(CONTENT_DIR, { recursive: true });
-    const filePath = path.join(CONTENT_DIR, filename);
-    await fs.writeFile(filePath, content, 'utf-8');
+    await sql`
+        INSERT INTO files (filename, content)
+        VALUES (${filename}, ${content})
+        ON CONFLICT (filename) DO UPDATE SET content = EXCLUDED.content
+    `;
+    console.log(`Saved to PostgreSQL: ${filename}`);
 };
 
+/**
+ * Retrieves a file's content from PostgreSQL.
+ * @param {string} filename
+ * @returns {Promise<string|null>}
+ */
 exports.getFile = async (filename) => {
-    const filePath = path.join(CONTENT_DIR, filename);
-    try {
-        return await fs.readFile(filePath, 'utf-8');
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            return null;
-        }
-        throw error;
+    const rows = await sql`
+        SELECT content FROM files WHERE filename = ${filename}
+    `;
+    if (rows.length === 0) {
+        return null;
     }
+    return rows[0].content;
 };
