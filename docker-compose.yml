@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  origin:
+    build: ./origin-server
+    container_name: origin-server
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    env_file:
+      - ./origin-server/.env
+
+  cdn1:
+    build: ./cdn-node
+    container_name: cdn-node-1
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - ORIGIN_URL=http://origin:4000
+    env_file:
+      - ./cdn-node/.env
+    depends_on:
+      - origin
+
+  cdn2:
+    build: ./cdn-node
+    container_name: cdn-node-2
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - ORIGIN_URL=http://origin:4000
+    env_file:
+      - ./cdn-node/.env
+    depends_on:
+      - origin
+
+  cdn3:
+    build: ./cdn-node
+    container_name: cdn-node-3
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - ORIGIN_URL=http://origin:4000
+    env_file:
+      - ./cdn-node/.env
+    depends_on:
+      - origin

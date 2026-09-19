@@ -1,37 +1,17 @@
-const fs = require("fs").promises;
-const path = require("path");
 const http = require("http");
 
-const ORIGIN_DIR = path.resolve(__dirname, "../../../origin-server/content");
+const ORIGIN_URL = process.env.ORIGIN_URL || 'http://localhost:4000';
 
 /**
- * Reads a file from the origin server content directory.
+ * Reads a file from the origin server via HTTP.
  * @param {string} filename - The name of the file to fetch.
  * @returns {Promise<string|null>} File contents or null if not found.
  */
-async function fetchFromOrigin(filename) {
-    console.log(`Fetching from origin locally: ${filename}`);
-    const filePath = path.join(ORIGIN_DIR, filename);
-
-    try {
-        const data = await fs.readFile(filePath, "utf-8");
-        return data;
-    } catch (error) {
-        if (error.code === "ENOENT") {
-            return null;
-        }
-        throw error;
-    }
-}
-
-function fetchFromOriginHttp(filename) {
+function fetchFromOrigin(filename) {
     return new Promise((resolve, reject) => {
-        const req = http.request({
-            hostname: 'localhost',
-            port: 3001,
-            path: `/api/file/${filename.replace('.txt', '')}`,
-            method: 'GET'
-        }, res => {
+        console.log(`Fetching from origin via HTTP: ${ORIGIN_URL}/content/${filename}`);
+        const url = new URL(`${ORIGIN_URL}/content/${filename}`);
+        const req = http.request(url, res => {
             if (res.statusCode === 404) {
                 return resolve(null);
             }
@@ -44,6 +24,21 @@ function fetchFromOriginHttp(filename) {
     });
 }
 
+function fetchFromOriginHttp(filename) {
+    return new Promise((resolve, reject) => {
+        const url = new URL(`${ORIGIN_URL}/api/file/${filename.replace('.txt', '')}`);
+        const req = http.request(url, res => {
+            if (res.statusCode === 404) {
+                return resolve(null);
+            }
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => resolve(data));
+        });
+        req.on('error', reject);
+        req.end();
+    });
+}
 
 module.exports = {
     fetchFromOrigin,
