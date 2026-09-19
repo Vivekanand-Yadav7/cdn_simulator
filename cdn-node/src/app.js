@@ -10,4 +10,8 @@ app.use(express.text({ type: '*/*' }));
 app.use("/content", contentRoutes);
 app.use("/api/file", fileRoutes);
 
+app.get("/health", (req, res) => {
+    res.status(200).send("OK");
+});
+
 module.exports = app;
