@@ -11,7 +11,7 @@ app.use("/content", contentRoutes);
 app.use("/api/file", fileRoutes);
 
 app.get("/health", (req, res) => {
-    res.status(200).send(`Node ID: ${process.env.PORT || 3000}`);
+    res.status(200).send(`Node ID: ${process.env.NODE_ID || process.env.PORT || 3000}`);
 });
 
 module.exports = app;
