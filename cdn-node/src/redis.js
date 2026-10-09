@@ -6,7 +6,7 @@ const redis = new Redis({
     token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-// Default TTL for cached content: 5 minutes
-const CACHE_TTL_SECONDS = 300;
+// Default TTL for cached content: 60 seconds (configurable via CACHE_TTL_SECONDS env var)
+const CACHE_TTL_SECONDS = parseInt(process.env.CACHE_TTL_SECONDS || '60', 10);
 
 module.exports = { redis, CACHE_TTL_SECONDS };
