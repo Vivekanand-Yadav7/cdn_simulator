@@ -1,4 +1,6 @@
-const { sql } = require('../db');
+'use strict';
+
+const { fileRepository } = require('../repository');
 
 /**
  * Saves (or replaces) a file's content in PostgreSQL.
@@ -6,11 +8,7 @@ const { sql } = require('../db');
  * @param {string} content
  */
 exports.saveFile = async (filename, content) => {
-    await sql`
-        INSERT INTO files (filename, content)
-        VALUES (${filename}, ${content})
-        ON CONFLICT (filename) DO UPDATE SET content = EXCLUDED.content
-    `;
+    await fileRepository.upsert(filename, content);
     console.log(`Saved to PostgreSQL: ${filename}`);
 };
 
@@ -20,11 +18,5 @@ exports.saveFile = async (filename, content) => {
  * @returns {Promise<string|null>}
  */
 exports.getFile = async (filename) => {
-    const rows = await sql`
-        SELECT content FROM files WHERE filename = ${filename}
-    `;
-    if (rows.length === 0) {
-        return null;
-    }
-    return rows[0].content;
+    return fileRepository.findByFilename(filename);
 };

@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sql } = require('../db');
+const { userRepository } = require('../repository');
 
 // Use environment variable for JWT secret, or fallback to a hardcoded one for dev.
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-dev-key';
@@ -14,8 +14,8 @@ exports.signup = async (req, res) => {
         }
 
         // Check if user already exists
-        const existingUsers = await sql`SELECT id FROM users WHERE username = ${username}`;
-        if (existingUsers.length > 0) {
+        const existingUser = await userRepository.findByUsername(username);
+        if (existingUser !== null) {
             return res.status(409).json({ error: 'Username already exists.' });
         }
 
@@ -24,13 +24,8 @@ exports.signup = async (req, res) => {
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
         // Insert new user
-        const newUsers = await sql`
-            INSERT INTO users (username, password_hash) 
-            VALUES (${username}, ${passwordHash}) 
-            RETURNING id, username
-        `;
+        const user = await userRepository.create(username, passwordHash);
 
-        const user = newUsers[0];
         res.status(201).json({ message: 'User created successfully.', user });
     } catch (error) {
         console.error('Signup error:', error);
@@ -47,12 +42,10 @@ exports.login = async (req, res) => {
         }
 
         // Fetch user from DB
-        const users = await sql`SELECT * FROM users WHERE username = ${username}`;
-        if (users.length === 0) {
+        const user = await userRepository.findByUsername(username);
+        if (user === null) {
             return res.status(401).json({ error: 'Invalid username or password.' });
         }
-
-        const user = users[0];
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password_hash);
